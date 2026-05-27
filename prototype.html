@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polar Amplification — 3D Observatory</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #050810;
+    --bg-card: #0a0f1a;
+    --bg-panel: #0d1220;
+    --border: #1a2540;
+    --border-glow: #1e3a5f;
+    --text-primary: #e8ecf4;
+    --text-secondary: #6b7a94;
+    --text-dim: #3a4a64;
+    --accent-red: #e94560;
+    --accent-orange: #ff9f43;
+    --accent-yellow: #ffc048;
+    --accent-blue: #4fc3f7;
+    --accent-cyan: #00e5ff;
+    --accent-green: #4caf50;
+    --glow-red: rgba(233, 69, 96, 0.3);
+    --glow-blue: rgba(79, 195, 247, 0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  .header {
+    padding: 20px 28px 12px;
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(79,195,247,0.03) 0%, transparent 100%);
+  }
+  .header h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px;
+    font-weight: 300;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+  .header h1 b { color: var(--accent-red); font-weight: 700; }
+  .header .tag {
+    font-size: 10px;
+    color: var(--accent-cyan);
+    background: rgba(0,229,255,0.08);
+    padding: 3px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(0,229,255,0.2);
+    letter-spacing: 1px;
+  }
+  .header .meta {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  /* Main grid */
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    grid-template-rows: 1fr 1fr;
+    gap: 1px;
+    height: calc(100vh - 110px);
+    background: var(--border);
+  }
+
+  .panel {
+    background: var(--bg-card);
+    position: relative;
+    overflow: hidden;
+  }
+  .panel-title {
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    font-size: 10px;
+    color: var(--accent-blue);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+    z-index: 10;
+    background: rgba(10,15,26,0.8);
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(79,195,247,0.15);
+  }
+  .panel-title .num {
+    color: var(--accent-red);
+    margin-right: 6px;
+    font-weight: 700;
+  }
+
+  /* 3D chart spans full left column */
+  .panel-3d { grid-row: 1 / 3; }
+  #chart3d { width: 100%; height: 100%; }
+
+  /* Heatmap */
+  #chartHeat { width: 100%; height: 100%; }
+
+  /* Time series */
+  #chartTime { width: 100%; height: 100%; }
+
+  /* Bottom controls */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 28px;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+  }
+  .play-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-red);
+    background: transparent;
+    color: var(--accent-red);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .play-btn:hover { background: var(--accent-red); color: #fff; }
+  .play-btn.playing { background: var(--accent-red); color: #fff; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 var(--glow-red); } 50% { box-shadow: 0 0 20px 4px var(--glow-red); } }
+
+  .year-display {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 48px;
+    font-weight: 200;
+    color: var(--accent-red);
+    min-width: 120px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .slider-wrap { flex: 1; }
+  .slider-wrap input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+  .slider-wrap input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    background: var(--accent-red);
+    border-radius: 50%;
+    cursor: grab;
+    box-shadow: 0 0 10px var(--glow-red);
+  }
+  .slider-labels { display: flex; justify-content: space-between; margin-top: 4px; }
+  .slider-labels span { font-size: 9px; color: var(--text-dim); }
+
+  .stats { display: flex; gap: 24px; margin-left: auto; }
+  .stat { text-align: center; }
+  .stat-val { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+  .stat-label { font-size: 8px; color: var(--text-dim); margin-top: 4px; text-transform: uppercase; letter-spacing: 2px; }
+
+  .mode-btns { display: flex; gap: 4px; }
+  .mode-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+  .mode-btn.active { background: var(--accent-blue); color: #000; border-color: var(--accent-blue); font-weight: 600; }
+
+  /* Scanline effect */
+  .panel::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  /* Corner decorations */
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 8px; height: 8px;
+    border-top: 2px solid var(--accent-cyan);
+    border-right: 2px solid var(--accent-cyan);
+    opacity: 0.4;
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>POLAR <b>AMPLIFICATION</b></h1>
+  <span class="tag">3D CROSS ANALYSIS</span>
+  <span class="meta">NOAA GML · NASA GISS · 1979–2025</span>
+</div>
+
+<div class="main">
+  <!-- 3D Scatter -->
+  <div class="panel panel-3d">
+    <div class="panel-title"><span class="num">01</span>3D Scatter — CO₂ × Latitude × Temperature</div>
+    <div id="chart3d"></div>
+  </div>
+
+  <!-- Heatmap -->
+  <div class="panel">
+    <div class="panel-title"><span class="num">02</span>Heatmap — Latitude × Year</div>
+    <div id="chartHeat"></div>
+  </div>
+
+  <!-- Time Series -->
+  <div class="panel">
+    <div class="panel-title"><span class="num">03</span>Time Series — CO₂ & Temperature</div>
+    <div id="chartTime"></div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="play-btn" id="playBtn">▶</button>
+  <div class="year-display" id="yearDisplay">2025</div>
+  <div class="slider-wrap">
+    <input type="range" id="yearSlider" min="1979" max="2025" value="2025" step="1">
+    <div class="slider-labels">
+      <span>1979</span><span>1985</span><span>1990</span><span>1995</span><span>2000</span><span>2005</span><span>2010</span><span>2015</span><span>2020</span><span>2025</span>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-val" id="sCO2" style="color:var(--accent-yellow)">425.6</div>
+      <div class="stat-label">CO₂ ppm</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="sGlob" style="color:var(--accent-red)">+1.19</div>
+      <div class="stat-label">Global °C</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="sArctic" style="color:var(--accent-orange)">+3.01</div>
+      <div class="stat-label">Arctic °C</div>
+    </div>
+  </div>
+  <div class="mode-btns">
+    <button class="mode-btn active" data-mode="year">Year</button>
+    <button class="mode-btn" data-mode="trail">Trail</button>
+    <button class="mode-btn" data-mode="all">All</button>
+  </div>
+</div>
+
+<script>
+// ====== DATA ======
+const co2Map = {1979:336.85,1980:338.91,1981:340.11,1982:340.85,1983:342.53,1984:344.07,1985:345.54,1986:346.97,1987:348.68,1988:351.16,1989:352.79,1990:354.06,1991:355.39,1992:356.09,1993:356.83,1994:358.33,1995:360.17,1996:361.93,1997:363.04,1998:365.70,1999:367.80,2000:368.96,2001:370.56,2002:372.58,2003:375.14,2004:376.95,2005:378.98,2006:381.15,2007:382.90,2008:385.02,2009:386.50,2010:388.75,2011:390.62,2012:392.65,2013:395.40,2014:397.34,2015:399.65,2016:403.07,2017:405.22,2018:407.61,2019:410.07,2020:412.44,2021:414.70,2022:417.08,2023:419.36,2024:422.79,2025:425.65};
+
+const bandDefs = [
+  { key: '64N-90N', label: 'Arctic (64N-90N)',   short: '64N-90N', color: '#e31a1c', idx: 0 },
+  { key: '44N-64N', label: 'N.Temp (44N-64N)',   short: '44N-64N', color: '#fb6a4a', idx: 1 },
+  { key: '24N-44N', label: 'N.Sub (24N-44N)',    short: '24N-44N', color: '#fdae6b', idx: 2 },
+  { key: 'EQU-24N', label: 'N.Trop (EQ-24N)',    short: 'EQ-24N',  color: '#fee5a0', idx: 3 },
+  { key: '24S-EQU', label: 'S.Trop (24S-EQ)',    short: '24S-EQ',  color: '#ccebc5', idx: 4 },
+  { key: '44S-24S', label: 'S.Sub (44S-24S)',    short: '44S-24S', color: '#a8ddb5', idx: 5 },
+  { key: '64S-44S', label: 'S.Temp (64S-44S)',   short: '64S-44S', color: '#7bccc4', idx: 6 },
+  { key: '90S-64S', label: 'Antarctic (90S-64S)', short: '90S-64S', color: '#2b8cbe', idx: 7 },
+];
+
+const tempRaw = {
+1979:{'64N-90N':-.61,'44N-64N':.07,'24N-44N':.09,'EQU-24N':.26,'24S-EQU':.27,'44S-24S':.29,'64S-44S':.33,'90S-64S':-.21,'Glob':.16,'NHem':.08,'SHem':.25},
+1980:{'64N-90N':.26,'44N-64N':.02,'24N-44N':.02,'EQU-24N':.33,'24S-EQU':.28,'44S-24S':.35,'64S-44S':.37,'90S-64S':.56,'Glob':.26,'NHem':.17,'SHem':.34},
+1981:{'64N-90N':1.09,'44N-64N':.79,'24N-44N':.08,'EQU-24N':.22,'24S-EQU':.14,'44S-24S':.28,'64S-44S':.39,'90S-64S':.62,'Glob':.32,'NHem':.37,'SHem':.27},
+1982:{'64N-90N':-.40,'44N-64N':.10,'24N-44N':-.08,'EQU-24N':.25,'24S-EQU':.29,'44S-24S':.18,'64S-44S':.32,'90S-64S':-.10,'Glob':.14,'NHem':.05,'SHem':.22},
+1983:{'64N-90N':.19,'44N-64N':.69,'24N-44N':-.07,'EQU-24N':.29,'24S-EQU':.57,'44S-24S':.21,'64S-44S':.41,'90S-64S':.10,'Glob':.31,'NHem':.25,'SHem':.38},
+1984:{'64N-90N':.36,'44N-64N':.08,'24N-44N':-.14,'EQU-24N':.07,'24S-EQU':.29,'44S-24S':.16,'64S-44S':.32,'90S-64S':.54,'Glob':.16,'NHem':.04,'SHem':.27},
+1985:{'64N-90N':.39,'44N-64N':-.26,'24N-44N':-.02,'EQU-24N':.04,'24S-EQU':.13,'44S-24S':.30,'64S-44S':.44,'90S-64S':.07,'Glob':.12,'NHem':.00,'SHem':.24},
+1986:{'64N-90N':.01,'44N-64N':.28,'24N-44N':.03,'EQU-24N':.18,'24S-EQU':.27,'44S-24S':.25,'64S-44S':.25,'90S-64S':-.09,'Glob':.18,'NHem':.13,'SHem':.23},
+1987:{'64N-90N':-.36,'44N-64N':.13,'24N-44N':.12,'EQU-24N':.55,'24S-EQU':.61,'44S-24S':.32,'64S-44S':.25,'90S-64S':.01,'Glob':.32,'NHem':.25,'SHem':.40},
+1988:{'64N-90N':.59,'44N-64N':.57,'24N-44N':.24,'EQU-24N':.32,'24S-EQU':.42,'44S-24S':.38,'64S-44S':.20,'90S-64S':.94,'Glob':.39,'NHem':.37,'SHem':.41},
+1989:{'64N-90N':.32,'44N-64N':.69,'24N-44N':.25,'EQU-24N':.07,'24S-EQU':.18,'44S-24S':.36,'64S-44S':.30,'90S-64S':.37,'Glob':.27,'NHem':.27,'SHem':.27},
+1990:{'64N-90N':.58,'44N-64N':.88,'24N-44N':.49,'EQU-24N':.38,'24S-EQU':.36,'44S-24S':.37,'64S-44S':.37,'90S-64S':.37,'Glob':.45,'NHem':.53,'SHem':.37},
+1991:{'64N-90N':.75,'44N-64N':.66,'24N-44N':.26,'EQU-24N':.32,'24S-EQU':.40,'44S-24S':.31,'64S-44S':.29,'90S-64S':.98,'Glob':.40,'NHem':.41,'SHem':.40},
+1992:{'64N-90N':-.17,'44N-64N':.44,'24N-44N':-.03,'EQU-24N':.20,'24S-EQU':.36,'44S-24S':.20,'64S-44S':.33,'90S-64S':.42,'Glob':.22,'NHem':.14,'SHem':.31},
+1993:{'64N-90N':.54,'44N-64N':.29,'24N-44N':-.11,'EQU-24N':.29,'24S-EQU':.35,'44S-24S':.27,'64S-44S':.39,'90S-64S':-.28,'Glob':.23,'NHem':.19,'SHem':.28},
+1994:{'64N-90N':.34,'44N-64N':.50,'24N-44N':.42,'EQU-24N':.28,'24S-EQU':.34,'44S-24S':.26,'64S-44S':.23,'90S-64S':-.02,'Glob':.31,'NHem':.37,'SHem':.26},
+1995:{'64N-90N':1.31,'44N-64N':.99,'24N-44N':.32,'EQU-24N':.40,'24S-EQU':.44,'44S-24S':.29,'64S-44S':.15,'90S-64S':.16,'Glob':.44,'NHem':.58,'SHem':.31},
+1996:{'64N-90N':.76,'44N-64N':.17,'24N-44N':.10,'EQU-24N':.31,'24S-EQU':.32,'44S-24S':.32,'64S-44S':.28,'90S-64S':1.31,'Glob':.33,'NHem':.26,'SHem':.40},
+1997:{'64N-90N':.76,'44N-64N':.90,'24N-44N':.23,'EQU-24N':.50,'24S-EQU':.52,'44S-24S':.42,'64S-44S':.36,'90S-64S':.03,'Glob':.46,'NHem':.52,'SHem':.41},
+1998:{'64N-90N':.86,'44N-64N':.94,'24N-44N':.66,'EQU-24N':.60,'24S-EQU':.78,'44S-24S':.39,'64S-44S':.31,'90S-64S':.15,'Glob':.61,'NHem':.71,'SHem':.51},
+1999:{'64N-90N':.40,'44N-64N':.80,'24N-44N':.74,'EQU-24N':.16,'24S-EQU':.24,'44S-24S':.46,'64S-44S':.19,'90S-64S':.02,'Glob':.38,'NHem':.48,'SHem':.28},
+2000:{'64N-90N':.97,'44N-64N':.80,'24N-44N':.55,'EQU-24N':.21,'24S-EQU':.27,'44S-24S':.41,'64S-44S':.10,'90S-64S':.28,'Glob':.39,'NHem':.50,'SHem':.28},
+2001:{'64N-90N':1.07,'44N-64N':.86,'24N-44N':.68,'EQU-24N':.40,'24S-EQU':.43,'44S-24S':.58,'64S-44S':.24,'90S-64S':.24,'Glob':.53,'NHem':.64,'SHem':.42},
+2002:{'64N-90N':1.25,'44N-64N':1.00,'24N-44N':.58,'EQU-24N':.55,'24S-EQU':.63,'44S-24S':.49,'64S-44S':.32,'90S-64S':.79,'Glob':.63,'NHem':.72,'SHem':.54},
+2003:{'64N-90N':1.50,'44N-64N':.98,'24N-44N':.54,'EQU-24N':.61,'24S-EQU':.65,'44S-24S':.44,'64S-44S':.24,'90S-64S':.36,'Glob':.61,'NHem':.75,'SHem':.48},
+2004:{'64N-90N':.47,'44N-64N':.95,'24N-44N':.66,'EQU-24N':.56,'24S-EQU':.52,'44S-24S':.48,'64S-44S':.23,'90S-64S':-.05,'Glob':.53,'NHem':.66,'SHem':.40},
+2005:{'64N-90N':1.99,'44N-64N':1.23,'24N-44N':.57,'EQU-24N':.62,'24S-EQU':.60,'44S-24S':.49,'64S-44S':.18,'90S-64S':.69,'Glob':.68,'NHem':.86,'SHem':.50},
+2006:{'64N-90N':1.76,'44N-64N':1.06,'24N-44N':.70,'EQU-24N':.57,'24S-EQU':.53,'44S-24S':.51,'64S-44S':.19,'90S-64S':.46,'Glob':.64,'NHem':.82,'SHem':.46},
+2007:{'64N-90N':2.09,'44N-64N':1.32,'24N-44N':.69,'EQU-24N':.45,'24S-EQU':.46,'44S-24S':.50,'64S-44S':.07,'90S-64S':1.28,'Glob':.66,'NHem':.85,'SHem':.47},
+2008:{'64N-90N':1.54,'44N-64N':1.07,'24N-44N':.61,'EQU-24N':.34,'24S-EQU':.40,'44S-24S':.52,'64S-44S':.09,'90S-64S':.63,'Glob':.54,'NHem':.68,'SHem':.40},
+2009:{'64N-90N':1.43,'44N-64N':.60,'24N-44N':.68,'EQU-24N':.65,'24S-EQU':.69,'44S-24S':.60,'64S-44S':.15,'90S-64S':.99,'Glob':.66,'NHem':.73,'SHem':.59},
+2010:{'64N-90N':2.25,'44N-64N':.87,'24N-44N':.74,'EQU-24N':.72,'24S-EQU':.63,'44S-24S':.63,'64S-44S':.20,'90S-64S':.53,'Glob':.72,'NHem':.91,'SHem':.54},
+2011:{'64N-90N':2.33,'44N-64N':.94,'24N-44N':.58,'EQU-24N':.39,'24S-EQU':.33,'44S-24S':.64,'64S-44S':.19,'90S-64S':1.10,'Glob':.61,'NHem':.74,'SHem':.47},
+2012:{'64N-90N':2.13,'44N-64N':.93,'24N-44N':.74,'EQU-24N':.48,'24S-EQU':.55,'44S-24S':.56,'64S-44S':.20,'90S-64S':.45,'Glob':.64,'NHem':.81,'SHem':.48},
+2013:{'64N-90N':1.54,'44N-64N':1.04,'24N-44N':.69,'EQU-24N':.59,'24S-EQU':.56,'44S-24S':.62,'64S-44S':.24,'90S-64S':.86,'Glob':.68,'NHem':.80,'SHem':.55},
+2014:{'64N-90N':2.06,'44N-64N':1.14,'24N-44N':.73,'EQU-24N':.70,'24S-EQU':.63,'44S-24S':.72,'64S-44S':.20,'90S-64S':.56,'Glob':.75,'NHem':.92,'SHem':.57},
+2015:{'64N-90N':2.03,'44N-64N':1.48,'24N-44N':.99,'EQU-24N':.98,'24S-EQU':.92,'44S-24S':.74,'64S-44S':.20,'90S-64S':-.35,'Glob':.90,'NHem':1.18,'SHem':.62},
+2016:{'64N-90N':3.26,'44N-64N':1.43,'24N-44N':1.07,'EQU-24N':.96,'24S-EQU':1.04,'44S-24S':.67,'64S-44S':.28,'90S-64S':.36,'Glob':1.01,'NHem':1.31,'SHem':.72},
+2017:{'64N-90N':2.52,'44N-64N':1.38,'24N-44N':1.03,'EQU-24N':.86,'24S-EQU':.74,'44S-24S':.76,'64S-44S':.38,'90S-64S':.52,'Glob':.92,'NHem':1.17,'SHem':.66},
+2018:{'64N-90N':2.17,'44N-64N':1.09,'24N-44N':1.05,'EQU-24N':.74,'24S-EQU':.61,'44S-24S':.79,'64S-44S':.41,'90S-64S':.92,'Glob':.85,'NHem':1.04,'SHem':.65},
+2019:{'64N-90N':2.78,'44N-64N':1.43,'24N-44N':.99,'EQU-24N':.91,'24S-EQU':.87,'44S-24S':.74,'64S-44S':.41,'90S-64S':.81,'Glob':.98,'NHem':1.22,'SHem':.74},
+2020:{'64N-90N':2.87,'44N-64N':1.81,'24N-44N':1.19,'EQU-24N':.88,'24S-EQU':.81,'44S-24S':.59,'64S-44S':.40,'90S-64S':.86,'Glob':1.01,'NHem':1.35,'SHem':.67},
+2021:{'64N-90N':2.09,'44N-64N':1.36,'24N-44N':1.26,'EQU-24N':.73,'24S-EQU':.57,'44S-24S':.72,'64S-44S':.34,'90S-64S':.30,'Glob':.85,'NHem':1.15,'SHem':.55},
+2022:{'64N-90N':2.36,'44N-64N':1.50,'24N-44N':1.27,'EQU-24N':.64,'24S-EQU':.49,'44S-24S':.78,'64S-44S':.41,'90S-64S':1.09,'Glob':.89,'NHem':1.16,'SHem':.62},
+2023:{'64N-90N':2.58,'44N-64N':1.86,'24N-44N':1.46,'EQU-24N':1.09,'24S-EQU':1.03,'44S-24S':.90,'64S-44S':.46,'90S-64S':.60,'Glob':1.17,'NHem':1.50,'SHem':.85},
+2024:{'64N-90N':2.92,'44N-64N':1.96,'24N-44N':1.65,'EQU-24N':1.23,'24S-EQU':1.15,'44S-24S':.88,'64S-44S':.55,'90S-64S':.72,'Glob':1.29,'NHem':1.66,'SHem':.91},
+2025:{'64N-90N':3.01,'44N-64N':1.99,'24N-44N':1.52,'EQU-24N':.86,'24S-EQU':.83,'44S-24S':.96,'64S-44S':.56,'90S-64S':1.59,'Glob':1.19,'NHem':1.49,'SHem':.89}
+};
+
+const years = Object.keys(tempRaw).map(Number);
+
+// ====== STATE ======
+let currentYear = 2025;
+let mode = 'year'; // 'year', 'trail', 'all'
+let playing = false;
+let animTimer = null;
+
+// ====== CHARTS ======
+const chart3d = echarts.init(document.getElementById('chart3d'));
+const chartHeat = echarts.init(document.getElementById('chartHeat'));
+const chartTime = echarts.init(document.getElementById('chartTime'));
+
+// ====== 3D SCATTER ======
+function build3DData(yr, mode) {
+  const data = [];
+  if (mode === 'year') {
+    bandDefs.forEach((b, i) => {
+      const co2 = co2Map[yr];
+      const temp = tempRaw[yr][b.key];
+      data.push({
+        value: [co2, i, temp],
+        itemStyle: { color: b.color, opacity: 0.9 },
+        bandIdx: i,
+        year: yr,
+      });
+    });
+  } else if (mode === 'trail') {
+    bandDefs.forEach((b, bi) => {
+      years.forEach(y => {
+        const co2 = co2Map[y];
+        const temp = tempRaw[y][b.key];
+        const isCurrent = y === yr;
+        const alpha = isCurrent ? 1 : 0.12 + 0.5 * (y - 1979) / (2025 - 1979);
+        const size = isCurrent ? 16 : 3 + 4 * (y - 1979) / (2025 - 1979);
+        data.push({
+          value: [co2, bi, temp],
+          itemStyle: { color: b.color, opacity: alpha },
+          symbolSize: size,
+          bandIdx: bi,
+          year: y,
+        });
+      });
+    });
+  } else { // all
+    bandDefs.forEach((b, bi) => {
+      years.forEach(y => {
+        const co2 = co2Map[y];
+        const temp = tempRaw[y][b.key];
+        const alpha = 0.06 + 0.6 * (y - 1979) / (2025 - 1979);
+        const size = 2 + 5 * (y - 1979) / (2025 - 1979);
+        data.push({
+          value: [co2, bi, temp],
+          itemStyle: { color: b.color, opacity: alpha },
+          symbolSize: size,
+          bandIdx: bi,
+          year: y,
+        });
+      });
+    });
+  }
+  return data;
+}
+
+function update3D() {
+  const data = build3DData(currentYear, mode);
+  chart3d.setOption({
+    grid3D: {
+      boxWidth: 120, boxHeight: 80, boxDepth: 80,
+      viewControl: { autoRotate: false, distance: 280, alpha: 20, beta: 35 },
+      axisLine: { lineStyle: { color: '#1a2540' } },
+      axisPointer: { lineStyle: { color: '#333' } },
+      splitLine: { lineStyle: { color: '#111' } },
+      axisLabel: { color: '#555', fontSize: 10 },
+      axisName: { color: '#888', fontSize: 11 },
+      environment: 'transparent',
+      light: { main: { intensity: 1.2, shadow: false }, ambient: { intensity: 0.4 } },
+    },
+    xAxis3D: { type: 'value', name: 'CO₂ (ppm)', min: 330, max: 430 },
+    yAxis3D: {
+      type: 'category', name: 'Latitude',
+      data: bandDefs.map(b => b.short),
+      axisLabel: { color: '#888', fontSize: 9 },
+    },
+    zAxis3D: { type: 'value', name: 'Temp (°C)', min: -1.5, max: 4 },
+    series: [{
+      type: 'scatter3D',
+      data: data,
+      symbolSize: mode === 'year' ? 14 : undefined,
+      shading: 'color',
+      label: { show: false },
+      emphasis: {
+        label: { show: true, formatter: p => {
+          const d = data[p.dataIndex];
+          return `${bandDefs[d.bandIdx].short}\n${d.year}\nCO₂:${d.value[0]}\n${d.value[2]>=0?'+':''}${d.value[2].toFixed(2)}°C`;
+        }, color: '#fff', fontSize: 11, backgroundColor: 'rgba(0,0,0,0.8)', padding: 6, borderRadius: 4 },
+        itemStyle: { opacity: 1 }
+      }
+    }],
+    tooltip: {
+      formatter: p => {
+        const d = p.data;
+        return `<b style="color:${bandDefs[d.bandIdx].color}">${bandDefs[d.bandIdx].label}</b><br/>Year: ${d.year}<br/>CO₂: ${d.value[0]} ppm<br/>Temp: ${d.value[2]>=0?'+':''}${d.value[2].toFixed(2)}°C`;
+      },
+      backgroundColor: 'rgba(10,15,26,0.95)', borderColor: '#333', textStyle: { color: '#ddd', fontFamily: 'JetBrains Mono', fontSize: 11 }
+    },
+    backgroundColor: 'transparent',
+    animation: true, animationDuration: 400, animationEasing: 'cubicOut',
+  });
+}
+
+// ====== HEATMAP ======
+function updateHeatmap() {
+  const heatData = [];
+  bandDefs.forEach((b, bi) => {
+    years.forEach((y, yi) => {
+      heatData.push([yi, bi, tempRaw[y][b.key]]);
+    });
+  });
+
+  chartHeat.setOption({
+    grid: { left: 80, right: 60, top: 35, bottom: 30 },
+    xAxis: { type: 'category', data: years.map(String), axisLabel: { color: '#555', fontSize: 8, interval: 4 }, splitArea: { show: false } },
+    yAxis: { type: 'category', data: bandDefs.map(b => b.short), axisLabel: { color: '#888', fontSize: 9 }, splitArea: { show: false } },
+    visualMap: {
+      min: -1.5, max: 3.5, calculable: false, orient: 'vertical', right: 6, top: 'center',
+      inRange: { color: ['#2166ac', '#67a9cf', '#d1e5f0', '#f7f7f7', '#fddbc7', '#ef8a62', '#b2182b'] },
+      textStyle: { color: '#666', fontSize: 10 },
+    },
+    series: [{
+      type: 'heatmap',
+      data: heatData,
+      label: { show: false },
+      emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.5)' } },
+    }],
+    tooltip: {
+      formatter: p => `<b>${bandDefs[p.value[1]].short}</b> · ${years[p.value[0]]}<br/>Temp: ${p.value[2]>=0?'+':''}${p.value[2].toFixed(2)}°C`,
+      backgroundColor: 'rgba(10,15,26,0.95)', borderColor: '#333', textStyle: { color: '#ddd', fontFamily: 'JetBrains Mono', fontSize: 11 }
+    },
+    // Mark current year column
+    markLine: { silent: true },
+    backgroundColor: 'transparent',
+    animation: true, animationDuration: 400,
+  });
+
+  // Highlight current year column with markLine
+  const yi = years.indexOf(currentYear);
+  chartHeat.setOption({
+    series: [{
+      markPoint: {
+        data: bandDefs.map((b, bi) => ({ coord: [yi, bi], symbol: 'rect', symbolSize: [2, 18], itemStyle: { color: 'rgba(233,69,96,0.6)' } })),
+        silent: true, animation: false,
+      }
+    }]
+  });
+}
+
+// ====== TIME SERIES ======
+function updateTimeSeries() {
+  const curCO2 = co2Map[currentYear];
+  chartTime.setOption({
+    grid: { left: 50, right: 50, top: 30, bottom: 30 },
+    xAxis: { type: 'category', data: years, axisLabel: { color: '#555', fontSize: 9, interval: 4 }, axisLine: { lineStyle: { color: '#1a2540' } } },
+    yAxis: [
+      { type: 'value', name: 'CO₂', nameTextStyle: { color: '#ffc048', fontSize: 10 }, axisLabel: { color: '#555', fontSize: 9 }, splitLine: { lineStyle: { color: '#111' } } },
+      { type: 'value', name: '°C', nameTextStyle: { color: '#e94560', fontSize: 10 }, axisLabel: { color: '#555', fontSize: 9 }, splitLine: { show: false } },
+    ],
+    series: [
+      {
+        name: 'CO₂', type: 'line', yAxisIndex: 0,
+        data: years.map(y => co2Map[y]),
+        lineStyle: { color: '#ffc048', width: 2 }, symbol: 'none',
+        areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(255,192,72,0.15)' }, { offset: 1, color: 'transparent' }] } },
+      },
+      {
+        name: 'Global', type: 'line', yAxisIndex: 1,
+        data: years.map(y => tempRaw[y].Glob),
+        lineStyle: { color: '#e94560', width: 2 }, symbol: 'none',
+      },
+      {
+        name: 'Arctic', type: 'line', yAxisIndex: 1,
+        data: years.map(y => tempRaw[y]['64N-90N']),
+        lineStyle: { color: '#e31a1c', width: 1.5, type: 'dashed' }, symbol: 'none',
+      },
+      {
+        // Current year marker
+        type: 'line',
+        data: years.map(y => y === currentYear ? co2Map[y] : null),
+        symbol: 'circle', symbolSize: 8, itemStyle: { color: '#ffc048' }, lineStyle: { width: 0 },
+        yAxisIndex: 0,
+      },
+    ],
+    legend: { show: false },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(10,15,26,0.95)', borderColor: '#333', textStyle: { color: '#ddd', fontFamily: 'JetBrains Mono', fontSize: 11 },
+      formatter: ps => {
+        const idx = ps[0].dataIndex; const y = years[idx];
+        return `<b>${y}</b><br/>CO₂: ${co2Map[y]} ppm<br/>Global: ${tempRaw[y].Glob>=0?'+':''}${tempRaw[y].Glob.toFixed(2)}°C<br/>Arctic: ${tempRaw[y]['64N-90N']>=0?'+':''}${tempRaw[y]['64N-90N'].toFixed(2)}°C`;
+      }
+    },
+    backgroundColor: 'transparent',
+    animation: true, animationDuration: 400,
+  });
+}
+
+// ====== UPDATE ALL ======
+function updateAll(yr) {
+  currentYear = yr;
+  const d = tempRaw[yr];
+  if (!d) return;
+
+  document.getElementById('yearDisplay').textContent = yr;
+  document.getElementById('yearSlider').value = yr;
+  document.getElementById('sCO2').textContent = co2Map[yr].toFixed(1);
+  document.getElementById('sGlob').textContent = (d.Glob>=0?'+':'') + d.Glob.toFixed(2);
+  document.getElementById('sArctic').textContent = (d['64N-90N']>=0?'+':'') + d['64N-90N'].toFixed(2);
+
+  update3D();
+  updateHeatmap();
+  updateTimeSeries();
+}
+
+// ====== CONTROLS ======
+const slider = document.getElementById('yearSlider');
+const playBtn = document.getElementById('playBtn');
+
+slider.addEventListener('input', () => updateAll(+slider.value));
+
+function togglePlay() {
+  if (playing) {
+    clearInterval(animTimer); playing = false;
+    playBtn.textContent = '▶'; playBtn.classList.remove('playing');
+  } else {
+    playing = true; playBtn.textContent = '⏸'; playBtn.classList.add('playing');
+    let yr = +slider.value;
+    if (yr >= 2025) { yr = 1979; updateAll(yr); }
+    animTimer = setInterval(() => {
+      yr++; if (yr > 2025) { clearInterval(animTimer); playing = false; playBtn.textContent = '▶'; playBtn.classList.remove('playing'); return; }
+      updateAll(yr);
+    }, 300);
+  }
+}
+playBtn.addEventListener('click', togglePlay);
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  if (e.code === 'ArrowLeft') { updateAll(Math.max(1979, +slider.value - 1)); }
+  if (e.code === 'ArrowRight') { updateAll(Math.min(2025, +slider.value + 1)); }
+});
+
+// Mode toggle
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+    update3D();
+  });
+});
+
+// Heatmap click → update year
+chartHeat.on('click', p => {
+  if (p.value) {
+    updateAll(years[p.value[0]]);
+  }
+});
+
+// Resize
+window.addEventListener('resize', () => { chart3d.resize(); chartHeat.resize(); chartTime.resize(); });
+
+// Init
+updateAll(2025);
+</script>
+</body>
+</html>
