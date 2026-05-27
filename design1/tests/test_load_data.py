@@ -63,3 +63,44 @@ def test_load_temperature_2025_north_pole_value(temp_csv_path):
 def test_load_temperature_146_rows(temp_csv_path):
     df = load_temperature(temp_csv_path)
     assert len(df) == 146  # 1880..2025 inclusive
+
+
+import numpy as np
+
+from load_data import build_long_df
+
+
+def test_build_long_df_columns(co2_csv_path, temp_csv_path):
+    df = build_long_df(co2_csv_path, temp_csv_path)
+    assert set(df.columns) == {"year", "lat_band", "lat_mid",
+                                "temp_anomaly", "co2_mean", "co2_unc"}
+
+
+def test_build_long_df_row_count(co2_csv_path, temp_csv_path):
+    df = build_long_df(co2_csv_path, temp_csv_path)
+    # 8 bands × 146 years (1880..2025)
+    assert len(df) == 8 * 146
+
+
+def test_build_long_df_co2_nan_before_1979(co2_csv_path, temp_csv_path):
+    df = build_long_df(co2_csv_path, temp_csv_path)
+    pre1979 = df[df["year"] < 1979]
+    assert pre1979["co2_mean"].isna().all()
+
+
+def test_build_long_df_co2_not_nan_after_1979(co2_csv_path, temp_csv_path):
+    df = build_long_df(co2_csv_path, temp_csv_path)
+    post1979 = df[df["year"] >= 1979]
+    assert not post1979["co2_mean"].isna().any()
+
+
+def test_build_long_df_lat_mid_correct(co2_csv_path, temp_csv_path):
+    df = build_long_df(co2_csv_path, temp_csv_path)
+    row = df[(df["year"] == 2000) & (df["lat_band"] == "64N-90N")].iloc[0]
+    assert row["lat_mid"] == 77
+
+
+def test_build_long_df_temp_value_correct(co2_csv_path, temp_csv_path):
+    df = build_long_df(co2_csv_path, temp_csv_path)
+    row = df[(df["year"] == 2025) & (df["lat_band"] == "64N-90N")].iloc[0]
+    assert row["temp_anomaly"] == pytest.approx(3.01)

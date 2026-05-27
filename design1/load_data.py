@@ -3,6 +3,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from lat_bands import FINE_BANDS, BAND_MID
+
 
 def load_co2(csv_path: str | Path) -> pd.DataFrame:
     """Load NOAA global annual CO2 mean.
@@ -30,3 +32,24 @@ def load_temperature(csv_path: str | Path) -> pd.DataFrame:
     fine_bands = ["90S-64S", "64S-44S", "44S-24S", "24S-EQU",
                   "EQU-24N", "24N-44N", "44N-64N", "64N-90N"]
     return df[["year"] + fine_bands].reset_index(drop=True)
+
+
+def build_long_df(co2_csv_path: str | Path,
+                  temp_csv_path: str | Path) -> pd.DataFrame:
+    """Merge CO2 + temperature into a long-form DataFrame.
+
+    Returns columns: year, lat_band, lat_mid, temp_anomaly, co2_mean, co2_unc.
+    CO2 columns are NaN for years before 1979.
+    """
+    co2 = load_co2(co2_csv_path)
+    temp = load_temperature(temp_csv_path)
+
+    long = temp.melt(
+        id_vars="year",
+        value_vars=FINE_BANDS,
+        var_name="lat_band",
+        value_name="temp_anomaly",
+    )
+    long["lat_mid"] = long["lat_band"].map(BAND_MID)
+    long = long.merge(co2, on="year", how="left")
+    return long.sort_values(["year", "lat_mid"]).reset_index(drop=True)
