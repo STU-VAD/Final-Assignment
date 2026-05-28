@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import Plotly from 'plotly.js-dist'
-import type { CombinedData, TemperatureData } from '../types'
+import type { CombinedData, TemperatureData, ViewMode } from '../types'
 import { useScatter3D } from '../composables/useScatter3D'
 import { useHeatmap } from '../composables/useHeatmap'
 import { useTimeSeries } from '../composables/useTimeSeries'
@@ -15,6 +15,7 @@ const props = defineProps<{
   tempData: TemperatureData | null
   currentYear: number
   isPlaying: boolean
+  viewMode: ViewMode
 }>()
 
 const emit = defineEmits<{
@@ -22,7 +23,7 @@ const emit = defineEmits<{
 }>()
 
 const chartRef = ref<HTMLElement>()
-const { buildCurrentYearTrace, buildHistoryTrail, buildSceneLayout } = useScatter3D()
+const { buildCurrentYearTrace, buildHistoryTrail, buildSceneLayout, CAMERA_PRESETS } = useScatter3D()
 const { buildHeatmapTrace, buildHeatmapLayout } = useHeatmap()
 const { buildCO2Line, buildUncertaintyBand, buildTimeSeriesLayout } = useTimeSeries()
 
@@ -97,6 +98,51 @@ function updateChart() {
   })
 }
 
+let modeTransitionTimer: number | null = null
+
+function switchCamera(mode: ViewMode) {
+  if (!chartRef.value || !initialized) return
+
+  const preset = CAMERA_PRESETS[mode]
+  const isFaceMode = mode !== '3d'
+
+  if (modeTransitionTimer) {
+    clearTimeout(modeTransitionTimer)
+    modeTransitionTimer = null
+  }
+
+  if (isFaceMode) {
+    Plotly.relayout(chartRef.value, {
+      'scene.camera': {
+        eye: preset.eye,
+        center: preset.center,
+        up: preset.up,
+        projection: { type: 'perspective' },
+      },
+    })
+    modeTransitionTimer = window.setTimeout(() => {
+      if (!chartRef.value) return
+      Plotly.relayout(chartRef.value, {
+        'scene.camera.projection.type': 'orthographic',
+      })
+    }, 450)
+  } else {
+    Plotly.relayout(chartRef.value, {
+      'scene.camera.projection.type': 'perspective',
+    })
+    modeTransitionTimer = window.setTimeout(() => {
+      if (!chartRef.value) return
+      Plotly.relayout(chartRef.value, {
+        'scene.camera': {
+          eye: preset.eye,
+          center: preset.center,
+          up: preset.up,
+        },
+      })
+    }, 50)
+  }
+}
+
 watch(() => props.currentYear, () => {
   if (props.isPlaying) return
   updateChart()
@@ -119,6 +165,11 @@ watch(() => props.isPlaying, (playing) => {
   }
 })
 
+watch(() => props.viewMode, (newMode, oldMode) => {
+  if (newMode === oldMode) return
+  switchCamera(newMode)
+})
+
 watch(() => [props.combinedData, props.tempData], () => {
   if (initialized) {
     Plotly.purge(chartRef.value!)
@@ -135,6 +186,7 @@ onBeforeUnmount(() => {
   if (chartRef.value && initialized) {
     Plotly.purge(chartRef.value)
   }
+  if (modeTransitionTimer) clearTimeout(modeTransitionTimer)
 })
 </script>
 
