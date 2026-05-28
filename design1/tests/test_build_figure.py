@@ -1,10 +1,12 @@
 """Tests for figure construction."""
 import pytest
+import plotly.graph_objects as go
 
 from load_data import build_long_df
 from build_figure import build_scatter_frames
 from build_figure import build_heatmap
 from build_figure import build_co2_trace, build_co2_uncertainty_traces
+from build_figure import build_figure
 
 
 @pytest.fixture(scope="module")
@@ -109,3 +111,41 @@ def test_uncertainty_band_returns_two_traces(long_df):
     assert upper.type == "scatter"
     assert lower.type == "scatter"
     assert lower.fill == "tonexty"
+
+
+def test_build_figure_returns_figure(long_df):
+    fig = build_figure(long_df)
+    assert isinstance(fig, go.Figure)
+
+
+def test_build_figure_has_47_frames(long_df):
+    fig = build_figure(long_df)
+    assert len(fig.frames) == 47
+
+
+def test_build_figure_has_slider(long_df):
+    fig = build_figure(long_df)
+    assert fig.layout.sliders is not None
+    assert len(fig.layout.sliders) == 1
+    # 47 slider steps (one per year)
+    assert len(fig.layout.sliders[0].steps) == 47
+
+
+def test_build_figure_has_play_pause_buttons(long_df):
+    fig = build_figure(long_df)
+    assert fig.layout.updatemenus is not None
+    buttons = fig.layout.updatemenus[0].buttons
+    labels = [b.label for b in buttons]
+    assert "▶ 播放" in labels
+    assert "⏸ 暂停" in labels
+
+
+def test_build_figure_chinese_title(long_df):
+    fig = build_figure(long_df)
+    assert "三维探索" in fig.layout.title.text
+
+
+def test_build_figure_dark_theme(long_df):
+    fig = build_figure(long_df)
+    assert fig.layout.template.layout.paper_bgcolor in {"#0f1419", "rgb(15,20,25)"} \
+        or "plotly_dark" in str(fig.layout.template)
