@@ -14,11 +14,48 @@ Choose a real- world dataset for which you would like to create an interactive d
 ## Report
 
 Include the following in around 5 pages:
-
-1. The name of all group members.2. The title of your group's project, reflecting the visual analysis problem and data you considered.3. The URL where your group's interactive data visualization is publicly available.4. The contributions of each group member, covering all the steps listed in the project details.5. Motivation: Introduce the visual analysis problem you have considered and what questions you wanted to answer with your interactive data visualization. Clearly explain the motivation.
-
-
-2. Target Users: Briefly explain your target users and any user specific requirements considered in your project. 7. Data: Briefly explain the data you have chosen, mention the data source, and how the data was processed (if applicable). Following Munzner's visualization analysis and design framework (Lecture 4, Munzner's book), abstract your data, and discuss its structure, the data attributes and their types. 8. Analysis Tasks: Following Munzner's visualization analysis and design framework (Lecture 4, Munzner's book), abstract your data analysis tasks that your visualization was meant to support. Provide a rationale to justify your choice of tasks with respect to your visual analysis problem. 9. Visual Encoding and Interactions: Describe the type of marks, visual variables and visual idiom you used to visually encode the data items and their attributes. Describe the interactions you provided for the user to manipulate with the data and support analysis and task completion. You can use Munzner's taxonomy of visual encodings and interactions (Lecture 4, Munzner's book) to help you in your discussion. 10. Rationale of Visualization Design: Clearly justify the rationale behind the chosen visual encodings and interactions using theories of human perception and cognition, visualization design principles and empirically derived findings in literature. Justify your rationale with references. Discuss why your design choices were appropriate for your visual analysis problem, target users, data and tasks. 11. Findings: Discuss the insights, observations, and discoveries you have made after visually analysis the data using your interactive data visualization. Did you manage to answer the questions you mentioned in step 5? If yes, what are the answers? If no, why or what could have gone wrong? 12. User study: Conduct a very simple user study to evaluate your visualization. Ask a few people to use your visualization and observe how they use the visualization to explore data. Then, talk to them to understand what the pros and cons of your work are. Reflect the results in your report. 13. Limitations: Discuss limitations of your interactive data visualization design and technique, and how it could be improved. 14. References: Any references you have cited in your report, to example justify your design choices. 15. The report can be written in either Chinese or English.
+1. The name of all group members.  
+2. The title of your group’s project, reflecting the visual analysis problem and data you 
+considered.  
+3. The URL where your group’s interactive data visualization is publicly available. 
+4. The contributions of each group member, covering all the steps listed in the project 
+details. 
+5. Motivation: Introduce the visual analysis problem you have considered and what 
+questions you wanted to answer with your interactive data visualization. Clearly explain 
+the motivation.
+Target Users: Briefly explain your target users and any user specific requirements 
+considered in your project. 
+7. Data: Briefly explain the data you have chosen, mention the data source, and how the data 
+was processed (if applicable). Following Munzner’s visualization analysis and design 
+framework (Lecture 4, Munzner’s book), abstract your data, and discuss its structure, the 
+data attributes and their types. 
+8. Analysis Tasks: Following Munzner’s visualization analysis and design framework 
+(Lecture 4, Munzner’s book), abstract your data analysis tasks that your visualization was 
+meant to support. Provide a rationale to justify your choice of tasks with respect to your 
+visual analysis problem. 
+9. Visual Encoding and Interactions: Describe the type of marks, visual variables and visual 
+idiom you used to visually encode the data items and their attributes. Describe the 
+interactions you provided for the user to manipulate with the data and support analysis 
+and task completion. You can use Munzner’s taxonomy of visual encodings and 
+interactions (Lecture 4, Munzner’s book) to help you in your discussion. 
+10. Rationale of Visualization Design: Clearly justify the rationale behind the chosen visual 
+encodings and interactions using theories of human perception and cognition, 
+visualization design principles and empirically derived findings in literature. Justify your 
+rationale with references. Discuss why your design choices were appropriate for your 
+visual analysis problem, target users, data and tasks. 
+11. Findings: Discuss the insights, observations, and discoveries you have made after visually 
+analysis the data using your interactive data visualization. Did you manage to answer the 
+questions you mentioned in step 5? If yes, what are the answers? If no, why or what could 
+have gone wrong? 
+12. User study: Conduct a very simple user study to evaluate your visualization. Ask a few 
+people to use your visualization and observe how they use the visualization to explore 
+data. Then, talk to them to understand what the pros and cons of your work are. Reflect 
+the results in your report.  
+13. Limitations: Discuss limitations of your interactive data visualization design and 
+technique, and how it could be improved. 
+14. References: Any references you have cited in your report, to example justify your design 
+choices. 
+15. The report can be written in either Chinese or English.
 
 ## Data
 
