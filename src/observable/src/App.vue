@@ -6,6 +6,7 @@
       :tempData="tempData"
       :currentYear="currentYear"
       :isPlaying="isPlaying"
+      :viewMode="viewMode"
     />
     <div v-else class="loading">加载数据中...</div>
 
@@ -15,8 +16,10 @@
       :maxYear="2025"
       :isPlaying="isPlaying"
       :stats="stats"
+      :viewMode="viewMode"
       @toggle-play="togglePlay"
       @update:year="setYear"
+      @update:viewMode="viewMode = $event"
     />
   </div>
 </template>
@@ -27,12 +30,13 @@ import ClimateChart from './components/ClimateChart.vue'
 import ControlBar from './components/ControlBar.vue'
 import { loadCombinedData, loadTemperatureData } from './data/loader'
 import { BAND_8 } from './data/climate-data'
-import type { CombinedData, TemperatureData } from './types'
+import type { CombinedData, TemperatureData, ViewMode } from './types'
 
 const combinedData = ref<CombinedData | null>(null)
 const tempData = ref<TemperatureData | null>(null)
 const currentYear = ref(2025)
 const isPlaying = ref(false)
+const viewMode = ref<ViewMode>('3d')
 let animInterval: number | null = null
 
 const stats = computed(() => {
