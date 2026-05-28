@@ -58,7 +58,6 @@ export function useScatter3D() {
     const colors: number[] = []
 
     for (const item of data.data) {
-      if (item.year >= currentYear) continue
       for (const band of BAND_8) {
         const temp = item.temperatures[band.key]
         if (temp === undefined) continue
