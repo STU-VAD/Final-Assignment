@@ -4,6 +4,7 @@ import pytest
 from load_data import build_long_df
 from build_figure import build_scatter_frames
 from build_figure import build_heatmap
+from build_figure import build_co2_trace, build_co2_uncertainty_traces
 
 
 @pytest.fixture(scope="module")
@@ -76,3 +77,35 @@ def test_heatmap_uses_rdbu_colorscale(long_df):
         or "rgb(5,48,97)" in cs_str
         or "rgb(103,0,31)" in cs_str
     ), f"unexpected colorscale: {cs_str[:200]}"
+
+
+def test_co2_trace_type(long_df):
+    co2_only = long_df[["year", "co2_mean", "co2_unc"]].drop_duplicates()
+    trace = build_co2_trace(co2_only)
+    assert trace.type == "scatter"
+    assert trace.mode == "lines"
+
+
+def test_co2_trace_x_covers_full_range(long_df):
+    co2_only = long_df[["year", "co2_mean", "co2_unc"]].drop_duplicates()
+    trace = build_co2_trace(co2_only)
+    assert min(trace.x) == 1880
+    assert max(trace.x) == 2025
+
+
+def test_co2_trace_y_nan_before_1979(long_df):
+    co2_only = long_df[["year", "co2_mean", "co2_unc"]].drop_duplicates()
+    trace = build_co2_trace(co2_only)
+    # Find index for year 1900
+    idx_1900 = list(trace.x).index(1900)
+    y_1900 = trace.y[idx_1900]
+    # pandas NaN serializes to None in plotly trace.y tuple
+    assert y_1900 is None or (isinstance(y_1900, float) and y_1900 != y_1900)
+
+
+def test_uncertainty_band_returns_two_traces(long_df):
+    co2_only = long_df[["year", "co2_mean", "co2_unc"]].drop_duplicates()
+    upper, lower = build_co2_uncertainty_traces(co2_only)
+    assert upper.type == "scatter"
+    assert lower.type == "scatter"
+    assert lower.fill == "tonexty"
