@@ -69,3 +69,24 @@ def build_scatter_frames(long_df: pd.DataFrame,
             ],
         ))
     return frames
+
+
+def build_heatmap(temp_wide: pd.DataFrame) -> go.Heatmap:
+    """Build the year × latitude temperature heatmap trace.
+
+    `temp_wide`: lat_band index × year columns, values = temp anomaly.
+    Returns a Heatmap trace ready to drop into a subplot.
+    """
+    # Reorder rows south→north so they align with 3D Y axis
+    temp_wide = temp_wide.reindex(FINE_BANDS)
+    y_labels = [BAND_LABEL[b] for b in temp_wide.index]
+    return go.Heatmap(
+        z=temp_wide.values.tolist(),
+        x=temp_wide.columns.tolist(),
+        y=y_labels,
+        colorscale=COLORSCALE,
+        zmin=TEMP_RANGE[0],
+        zmax=TEMP_RANGE[1],
+        colorbar=dict(title="温度异常 °C", thickness=10),
+        hovertemplate="年份 %{x}<br>纬度带 %{y}<br>温度异常 %{z:+.2f} °C<extra></extra>",
+    )

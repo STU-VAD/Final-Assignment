@@ -3,6 +3,7 @@ import pytest
 
 from load_data import build_long_df
 from build_figure import build_scatter_frames
+from build_figure import build_heatmap
 
 
 @pytest.fixture(scope="module")
@@ -45,3 +46,33 @@ def test_trail_size_bounded(long_df):
     assert len(frames[0].data[1].x) == 0
     # frame index 10 = year 1989, 5 preceding years × 8 bands
     assert len(frames[10].data[1].x) == 5 * 8
+
+
+def test_heatmap_returns_trace(long_df):
+    temp_wide = long_df.pivot(index="lat_band", columns="year",
+                               values="temp_anomaly")
+    trace = build_heatmap(temp_wide)
+    assert trace.type == "heatmap"
+
+
+def test_heatmap_z_shape(long_df):
+    temp_wide = long_df.pivot(index="lat_band", columns="year",
+                               values="temp_anomaly")
+    trace = build_heatmap(temp_wide)
+    # 8 rows × 146 cols
+    assert len(trace.z) == 8
+    assert len(trace.z[0]) == 146
+
+
+def test_heatmap_uses_rdbu_colorscale(long_df):
+    temp_wide = long_df.pivot(index="lat_band", columns="year",
+                               values="temp_anomaly")
+    trace = build_heatmap(temp_wide)
+    cs_str = str(trace.colorscale)
+    # Plotly may store the string "RdBu_r" verbatim or normalize it to RGB tuples.
+    # RdBu_r endpoints: rgb(5,48,97) deep blue ↔ rgb(103,0,31) deep red.
+    assert (
+        "RdBu" in cs_str
+        or "rgb(5,48,97)" in cs_str
+        or "rgb(103,0,31)" in cs_str
+    ), f"unexpected colorscale: {cs_str[:200]}"
