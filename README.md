@@ -1,11 +1,3 @@
-## design1 · 3D CO₂ × 纬度 × 温度 联动可视化
-
-- 设计文档：[design1/2026-05-27-co2-latitude-temperature-3d-viz-design.md](design1/2026-05-27-co2-latitude-temperature-3d-viz-design.md)
-- 实施计划：[design1/2026-05-27-co2-latitude-temperature-3d-viz-plan.md](design1/2026-05-27-co2-latitude-temperature-3d-viz-plan.md)
-- 公开访问：（待管理员授权 push 后部署 GitHub Pages 时填入）
-- 本地预览：`cd design1 && python -m uv run python build.py && start index.html`
-
----
 
 ## Final Course Project
 
