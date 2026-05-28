@@ -4,6 +4,17 @@
       {{ isPlaying ? '⏸ 暂停' : '▶ 播放' }}
     </button>
 
+    <div class="mode-btns">
+      <button
+        v-for="m in modes"
+        :key="m.id"
+        class="mode-btn"
+        :class="{ active: viewMode === m.id }"
+        @click="$emit('update:viewMode', m.id)"
+        :title="m.tip"
+      >{{ m.label }}</button>
+    </div>
+
     <div class="year-display">{{ currentYear }}</div>
 
     <div class="slider-wrap">
@@ -31,18 +42,29 @@
 </template>
 
 <script setup lang="ts">
+import type { ViewMode } from '../types'
+
 defineProps<{
   currentYear: number
   minYear: number
   maxYear: number
   isPlaying: boolean
   stats: { co2: string; arcticTemp: string } | null
+  viewMode: ViewMode
 }>()
 
 defineEmits<{
   'toggle-play': []
   'update:year': [year: number]
+  'update:viewMode': [mode: ViewMode]
 }>()
+
+const modes: { id: ViewMode; label: string; tip: string }[] = [
+  { id: '3d',    label: '3D',      tip: '三维全景' },
+  { id: 'faceA', label: 'CO₂×T',   tip: 'CO₂ × 温度异常' },
+  { id: 'faceB', label: 'Lat×T',   tip: '纬度 × 温度异常' },
+  { id: 'faceC', label: 'CO₂×Lat', tip: 'CO₂ × 纬度' },
+]
 </script>
 
 <style scoped>
@@ -121,5 +143,30 @@ defineEmits<{
   margin-top: 4px;
   text-transform: uppercase;
   letter-spacing: 2px;
+}
+.mode-btns {
+  display: flex;
+  gap: 4px;
+}
+.mode-btn {
+  padding: 4px 8px;
+  background: transparent;
+  color: #6b7a94;
+  border: 1px solid #1a2540;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.mode-btn:hover {
+  border-color: #e94560;
+  color: #e94560;
+}
+.mode-btn.active {
+  background: #e94560;
+  border-color: #e94560;
+  color: #fff;
 }
 </style>
