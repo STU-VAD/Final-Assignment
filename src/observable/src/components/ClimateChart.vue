@@ -20,6 +20,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:year': [year: number]
+  'update:viewMode': [mode: ViewMode]
 }>()
 
 const chartRef = ref<HTMLElement>()
@@ -81,6 +82,12 @@ function initChart() {
   const config = { responsive: true, displayModeBar: false }
 
   Plotly.newPlot(chartRef.value, traces, layout, config)
+
+  chartRef.value.on('plotly_doubleclick', () => {
+    if (props.viewMode !== '3d') {
+      emit('update:viewMode', '3d')
+    }
+  })
 
   const frames = buildFrames()
   Plotly.addFrames(chartRef.value, frames)

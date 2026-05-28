@@ -7,6 +7,7 @@
       :currentYear="currentYear"
       :isPlaying="isPlaying"
       :viewMode="viewMode"
+      @update:viewMode="viewMode = $event"
     />
     <div v-else class="loading">加载数据中...</div>
 
