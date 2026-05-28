@@ -1,4 +1,8 @@
 """Tests for figure construction."""
+import subprocess
+import sys
+from pathlib import Path
+
 import pytest
 import plotly.graph_objects as go
 
@@ -149,3 +153,17 @@ def test_build_figure_dark_theme(long_df):
     fig = build_figure(long_df)
     assert fig.layout.template.layout.paper_bgcolor in {"#0f1419", "rgb(15,20,25)"} \
         or "plotly_dark" in str(fig.layout.template)
+
+
+def test_build_entry_produces_index_html(tmp_path, monkeypatch):
+    """End-to-end: running build.py creates a non-empty index.html."""
+    design_dir = Path(__file__).resolve().parents[1]
+    output = tmp_path / "index.html"
+    cmd = [sys.executable, str(design_dir / "build.py"), "--output", str(output)]
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=design_dir)
+    assert result.returncode == 0, f"build failed: {result.stderr}"
+    assert output.exists()
+    assert output.stat().st_size > 100_000  # ≥ 100 KB
+    text = output.read_text(encoding="utf-8")
+    assert "三维探索" in text
+    assert "Plotly" in text
