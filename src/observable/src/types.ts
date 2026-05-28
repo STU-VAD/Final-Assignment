@@ -15,3 +15,11 @@ export interface TemperatureData {
   latitudeBands: string[]
   anomalies: number[][]
 }
+
+export type ViewMode = '3d' | 'faceA' | 'faceB' | 'faceC'
+
+export interface CameraPreset {
+  eye: { x: number; y: number; z: number }
+  center: { x: number; y: number; z: number }
+  up: { x: number; y: number; z: number }
+}

@@ -1,5 +1,12 @@
-import type { CombinedData } from '../types'
+import type { CameraPreset, CombinedData, ViewMode } from '../types'
 import { BAND_8, TEMP_COLORSCALE, TEMP_MIN, TEMP_MAX, CO2_MIN, CO2_MAX } from '../data/climate-data'
+
+export const CAMERA_PRESETS: Record<ViewMode, CameraPreset> = {
+  '3d':    { eye: { x: 1.5, y: -1.5, z: 0.8 }, center: { x: 0, y: 0, z: 0 }, up: { x: 0, y: 0, z: 1 } },
+  'faceA': { eye: { x: 0, y: -2.5, z: 0 },     center: { x: 0, y: 0, z: 0 }, up: { x: 0, y: 0, z: 1 } },
+  'faceB': { eye: { x: 2.5, y: 0, z: 0 },      center: { x: 0, y: 0, z: 0 }, up: { x: 0, y: 0, z: 1 } },
+  'faceC': { eye: { x: 0, y: -0.01, z: 2.5 },  center: { x: 0, y: 0, z: 0 }, up: { x: 0, y: 1, z: 0 } },
+}
 
 export function useScatter3D() {
   function buildCurrentYearTrace(data: CombinedData, year: number) {
@@ -135,5 +142,5 @@ export function useScatter3D() {
     }
   }
 
-  return { buildCurrentYearTrace, buildHistoryTrail, buildSceneLayout }
+  return { buildCurrentYearTrace, buildHistoryTrail, buildSceneLayout, CAMERA_PRESETS }
 }
