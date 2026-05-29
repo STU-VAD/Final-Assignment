@@ -37,7 +37,7 @@ export function useScatter3D() {
       showlegend: false,
       x, y, z,
       customdata,
-      hovertemplate: '年份 %{customdata[0]}<br>纬度带 %{customdata[1]}<br>CO₂ %{x:.2f} ppm<br>温度异常 %{z:+.2f} °C<extra></extra>',
+      hovertemplate: '年份 %{customdata[0]}<br>纬度带 %{customdata[1]}<br>CO₂ %{x:.2f} ppm<br>温度异常 %{z:.2f} °C<extra></extra>',
       marker: {
         size: 7,
         opacity: 0.9,
@@ -77,7 +77,7 @@ export function useScatter3D() {
       showlegend: false,
       x, y, z,
       customdata,
-      hovertemplate: '年份 %{customdata[0]}<br>纬度带 %{customdata[1]}<br>CO₂ %{x:.2f} ppm<br>温度异常 %{z:+.2f} °C<extra></extra>',
+      hovertemplate: '年份 %{customdata[0]}<br>纬度带 %{customdata[1]}<br>CO₂ %{x:.2f} ppm<br>温度异常 %{z:.2f} °C<extra></extra>',
       marker: {
         size: 4,
         opacity: 0.25,
@@ -99,7 +99,7 @@ export function useScatter3D() {
       showlegend: false,
       x: [] as number[], y: [] as number[], z: [] as number[],
       customdata: [],
-      hovertemplate: '年份 %{customdata[0]}<br>纬度带 %{customdata[1]}<br>CO₂ %{x:.2f} ppm<br>温度异常 %{z:+.2f} °C<extra></extra>',
+      hovertemplate: '年份 %{customdata[0]}<br>纬度带 %{customdata[1]}<br>CO₂ %{x:.2f} ppm<br>温度异常 %{z:.2f} °C<extra></extra>',
       marker: { size: 7, opacity: 0.9, color: [], cmin: TEMP_MIN, cmax: TEMP_MAX, colorscale: TEMP_COLORSCALE, showscale: false },
     }
   }

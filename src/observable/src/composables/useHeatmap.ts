@@ -36,7 +36,7 @@ export function useHeatmap() {
         tickfont: { color: '#f2f5fa' },
         titlefont: { color: '#f2f5fa' },
       },
-      hovertemplate: '年份 %{x}<br>纬度带 %{y}<br>温度异常 %{z:+.2f} °C<extra></extra>',
+      hovertemplate: '年份 %{x}<br>纬度带 %{y}<br>温度异常 %{z:.2f} °C<extra></extra>',
       xaxis: 'x',
       yaxis: 'y',
     }

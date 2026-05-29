@@ -102,7 +102,7 @@ function updateChart() {
     frame: { duration: 200, redraw: true },
     mode: 'immediate',
     fromcurrent: true,
-  })
+  }).catch(() => {})
 }
 
 let modeTransitionTimer: number | null = null
@@ -163,12 +163,12 @@ watch(() => props.isPlaying, (playing) => {
       frame: { duration: 200, redraw: true },
       fromcurrent: true,
       mode: 'immediate',
-    })
+    }).catch(() => {})
   } else {
     Plotly.animate(chartRef.value, [null], {
       frame: { duration: 0, redraw: false },
       mode: 'immediate',
-    })
+    }).catch(() => {})
   }
 })
 
