@@ -8,6 +8,8 @@ export const CAMERA_PRESETS: Record<ViewMode, CameraPreset> = {
   'faceC': { eye: { x: 0, y: -0.01, z: 2.5 },  center: { x: 0, y: 0, z: 0 }, up: { x: 0, y: 1, z: 0 } },
 }
 
+const SCATTER3D_HOVER = '年份 %{customdata[0]}<br>纬度带 %{customdata[1]}<br>CO₂ %{x:.2f} ppm<br>温度异常 %{z:.2f} °C<extra></extra>'
+
 export function useScatter3D() {
   function buildCurrentYearTrace(data: CombinedData, year: number) {
     const item = data.data.find(d => d.year === year)
@@ -37,7 +39,7 @@ export function useScatter3D() {
       showlegend: false,
       x, y, z,
       customdata,
-      hovertemplate: '年份 %{customdata[0]}<br>纬度带 %{customdata[1]}<br>CO₂ %{x:.2f} ppm<br>温度异常 %{z:.2f} °C<extra></extra>',
+      hovertemplate: SCATTER3D_HOVER,
       marker: {
         size: 7,
         opacity: 0.9,
@@ -77,7 +79,7 @@ export function useScatter3D() {
       showlegend: false,
       x, y, z,
       customdata,
-      hovertemplate: '年份 %{customdata[0]}<br>纬度带 %{customdata[1]}<br>CO₂ %{x:.2f} ppm<br>温度异常 %{z:.2f} °C<extra></extra>',
+      hovertemplate: SCATTER3D_HOVER,
       marker: {
         size: 4,
         opacity: 0.25,
@@ -99,7 +101,7 @@ export function useScatter3D() {
       showlegend: false,
       x: [] as number[], y: [] as number[], z: [] as number[],
       customdata: [],
-      hovertemplate: '年份 %{customdata[0]}<br>纬度带 %{customdata[1]}<br>CO₂ %{x:.2f} ppm<br>温度异常 %{z:.2f} °C<extra></extra>',
+      hovertemplate: SCATTER3D_HOVER,
       marker: { size: 7, opacity: 0.9, color: [], cmin: TEMP_MIN, cmax: TEMP_MAX, colorscale: TEMP_COLORSCALE, showscale: false },
     }
   }

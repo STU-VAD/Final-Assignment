@@ -95,14 +95,18 @@ function initChart() {
   initialized = true
 }
 
+function animateSilently(el: HTMLElement, frames: any, opts: any) {
+  Plotly.animate(el, frames, opts).catch(() => {})
+}
+
 function updateChart() {
   if (!chartRef.value || !initialized || !props.combinedData || !props.tempData) return
 
-  Plotly.animate(chartRef.value, [String(props.currentYear)], {
+  animateSilently(chartRef.value, [String(props.currentYear)], {
     frame: { duration: 200, redraw: true },
     mode: 'immediate',
     fromcurrent: true,
-  }).catch(() => {})
+  })
 }
 
 let modeTransitionTimer: number | null = null
@@ -159,16 +163,16 @@ watch(() => props.isPlaying, (playing) => {
   if (!chartRef.value || !initialized) return
 
   if (playing) {
-    Plotly.animate(chartRef.value, null, {
+    animateSilently(chartRef.value, null, {
       frame: { duration: 200, redraw: true },
       fromcurrent: true,
       mode: 'immediate',
-    }).catch(() => {})
+    })
   } else {
-    Plotly.animate(chartRef.value, [null], {
+    animateSilently(chartRef.value, [null], {
       frame: { duration: 0, redraw: false },
       mode: 'immediate',
-    }).catch(() => {})
+    })
   }
 })
 
@@ -178,8 +182,8 @@ watch(() => props.viewMode, (newMode, oldMode) => {
 })
 
 watch(() => [props.combinedData, props.tempData], () => {
-  if (initialized) {
-    Plotly.purge(chartRef.value!)
+  if (initialized && chartRef.value) {
+    Plotly.purge(chartRef.value)
     initialized = false
   }
   initChart()
