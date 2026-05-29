@@ -6,6 +6,7 @@
 import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import Plotly from 'plotly.js-dist'
 import type { CombinedData, TemperatureData, ViewMode } from '../types'
+import { BAND_8 } from '../data/climate-data'
 import { useScatter3D } from '../composables/useScatter3D'
 import { useHeatmap } from '../composables/useHeatmap'
 import { useTimeSeries } from '../composables/useTimeSeries'
@@ -17,6 +18,7 @@ const props = defineProps<{
   isPlaying: boolean
   viewMode: ViewMode
   animationSpeed?: number
+  hiddenBands: Set<string>
 }>()
 
 const emit = defineEmits<{
@@ -167,6 +169,17 @@ function switchCamera(mode: ViewMode) {
     }, 50)
   }
 }
+
+function syncVisibility() {
+  if (!chartRef.value || !initialized) return
+
+  for (let i = 0; i < BAND_8.length; i++) {
+    const hidden = props.hiddenBands.has(BAND_8[i].key)
+    Plotly.restyle(chartRef.value, { visible: !hidden }, [i, i + BAND_8.length, i + BAND_8.length * 2])
+  }
+}
+
+watch(() => props.hiddenBands, () => syncVisibility(), { deep: true })
 
 watch(() => props.currentYear, () => {
   if (props.isPlaying) return
