@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import Plotly from 'plotly.js-dist'
 import type { CombinedData, TemperatureData, ViewMode } from '../types'
 import { useScatter3D } from '../composables/useScatter3D'
@@ -16,6 +16,7 @@ const props = defineProps<{
   currentYear: number
   isPlaying: boolean
   viewMode: ViewMode
+  animationSpeed?: number
 }>()
 
 const emit = defineEmits<{
@@ -23,8 +24,10 @@ const emit = defineEmits<{
   'update:viewMode': [mode: ViewMode]
 }>()
 
+const animationDuration = computed(() => props.animationSpeed ?? 500)
+
 const chartRef = ref<HTMLElement>()
-const { buildCurrentYearTrace, buildHistoryTrail, buildSceneLayout, CAMERA_PRESETS } = useScatter3D()
+const { buildCurrentYearTrace, buildHistoryTrail, buildTrendLines, buildSceneLayout, CAMERA_PRESETS } = useScatter3D()
 const { buildHeatmapTrace, buildHeatmapLayout } = useHeatmap()
 const { buildCO2Line, buildUncertaintyBand, buildTimeSeriesLayout } = useTimeSeries()
 
@@ -51,11 +54,15 @@ function buildTraces() {
 
   const current = buildCurrentYearTrace(props.combinedData, props.currentYear)
   const trail = buildHistoryTrail(props.combinedData, props.currentYear)
+  const trendLines = buildTrendLines(props.combinedData, props.currentYear)
   const heat = buildHeatmapTrace(props.tempData)
   const co2Line = buildCO2Line(props.combinedData)
   const co2Band = buildUncertaintyBand(props.combinedData)
 
-  return [current, trail, heat, co2Band, co2Line]
+  const currentArray = Array.isArray(current) ? current : [current]
+  const trailArray = Array.isArray(trail) ? trail : [trail]
+
+  return [...currentArray, ...trailArray, ...trendLines, heat, co2Band, co2Line]
 }
 
 function buildFrames() {
@@ -64,10 +71,17 @@ function buildFrames() {
   return props.combinedData.years.map(year => {
     const current = buildCurrentYearTrace(props.combinedData!, year)
     const trail = buildHistoryTrail(props.combinedData!, year)
+    const trendLines = buildTrendLines(props.combinedData!, year)
+
+    const currentArray = Array.isArray(current) ? current : [current]
+    const trailArray = Array.isArray(trail) ? trail : [trail]
+
+    const frameData = [...currentArray, ...trailArray, ...trendLines]
+    const traceIndices = Array.from({ length: frameData.length }, (_, i) => i)
     return {
       name: String(year),
-      data: [current, trail] as Partial<Plotly.PlotData>[],
-      traces: [0, 1],
+      data: frameData,
+      traces: traceIndices,
     }
   })
 }
@@ -79,11 +93,11 @@ function initChart() {
 
   const traces = buildTraces()
   const layout = buildLayout()
-  const config = { responsive: true, displayModeBar: false }
+  const config = { responsive: true, displayModeBar: true }
 
   Plotly.newPlot(chartRef.value, traces, layout, config)
 
-  chartRef.value.on('plotly_doubleclick', () => {
+  ;(chartRef.value as any).on('plotly_doubleclick', () => {
     if (props.viewMode !== '3d') {
       emit('update:viewMode', '3d')
     }
@@ -103,7 +117,7 @@ function updateChart() {
   if (!chartRef.value || !initialized || !props.combinedData || !props.tempData) return
 
   animateSilently(chartRef.value, [String(props.currentYear)], {
-    frame: { duration: 200, redraw: true },
+    frame: { duration: animationDuration.value, redraw: true },
     mode: 'immediate',
     fromcurrent: true,
   })
@@ -164,7 +178,7 @@ watch(() => props.isPlaying, (playing) => {
 
   if (playing) {
     animateSilently(chartRef.value, null, {
-      frame: { duration: 200, redraw: true },
+      frame: { duration: animationDuration.value, redraw: true },
       fromcurrent: true,
       mode: 'immediate',
     })
