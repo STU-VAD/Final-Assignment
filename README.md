@@ -23,7 +23,7 @@ details.
 5. Motivation: Introduce the visual analysis problem you have considered and what 
 questions you wanted to answer with your interactive data visualization. Clearly explain 
 the motivation.
-6.Target Users: Briefly explain your target users and any user specific requirements 
+Target Users: Briefly explain your target users and any user specific requirements 
 considered in your project. 
 7. Data: Briefly explain the data you have chosen, mention the data source, and how the data 
 was processed (if applicable). Following Munzner’s visualization analysis and design 

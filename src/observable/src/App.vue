@@ -7,8 +7,10 @@
       :currentYear="currentYear"
       :isPlaying="isPlaying"
       :viewMode="viewMode"
+      :animationSpeed="PLAY_SPEED"
       @update:viewMode="viewMode = $event"
     />
+    <Legend v-if="combinedData && tempData" />
     <div v-else class="loading">加载数据中...</div>
 
     <ControlBar
@@ -28,10 +30,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import ClimateChart from './components/ClimateChart.vue'
+import Legend from './components/Legend.vue'
 import ControlBar from './components/ControlBar.vue'
 import { loadCombinedData, loadTemperatureData } from './data/loader'
 import { BAND_8 } from './data/climate-data'
 import type { CombinedData, TemperatureData, ViewMode } from './types'
+
+const PLAY_SPEED = 500
 
 const combinedData = ref<CombinedData | null>(null)
 const tempData = ref<TemperatureData | null>(null)
@@ -67,7 +72,7 @@ function togglePlay() {
         isPlaying.value = false
         if (animInterval) clearInterval(animInterval)
       }
-    }, 250)
+    }, PLAY_SPEED)
   } else {
     if (animInterval) {
       clearInterval(animInterval)
