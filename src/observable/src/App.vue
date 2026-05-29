@@ -8,9 +8,14 @@
       :isPlaying="isPlaying"
       :viewMode="viewMode"
       :animationSpeed="PLAY_SPEED"
+      :hiddenBands="hiddenBands"
       @update:viewMode="viewMode = $event"
     />
-    <Legend v-if="combinedData && tempData" />
+    <Legend
+      v-if="combinedData && tempData"
+      :hiddenBands="hiddenBands"
+      @toggle-band="toggleBand"
+    />
     <div v-else class="loading">加载数据中...</div>
 
     <ControlBar
@@ -43,7 +48,18 @@ const tempData = ref<TemperatureData | null>(null)
 const currentYear = ref(2025)
 const isPlaying = ref(false)
 const viewMode = ref<ViewMode>('3d')
+const hiddenBands = ref<Set<string>>(new Set())
 let animInterval: number | null = null
+
+function toggleBand(key: string) {
+  const next = new Set(hiddenBands.value)
+  if (next.has(key)) {
+    next.delete(key)
+  } else {
+    next.add(key)
+  }
+  hiddenBands.value = next
+}
 
 const stats = computed(() => {
   if (!combinedData.value) return null

@@ -6,15 +6,17 @@
     </div>
     <div class="legend-content" v-show="!isCollapsed">
       <div class="legend-items">
-        <div 
-          v-for="band in bands" 
-          :key="band.key" 
+        <div
+          v-for="band in bands"
+          :key="band.key"
           class="legend-item"
+          :class="{ 'legend-item--hidden': hiddenBands.has(band.key) }"
           :title="band.label"
+          @click="emit('toggle-band', band.key)"
         >
-          <div 
-            class="legend-color" 
-            :style="{ backgroundColor: band.color }"
+          <div
+            class="legend-color"
+            :style="{ backgroundColor: hiddenBands.has(band.key) ? '#3a4455' : band.color }"
           ></div>
           <span class="legend-label">{{ band.label }}</span>
         </div>
@@ -26,6 +28,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { BAND_8 } from '../data/climate-data'
+
+const props = defineProps<{
+  hiddenBands: Set<string>
+}>()
+
+const emit = defineEmits<{
+  'toggle-band': [key: string]
+}>()
 
 const bands = BAND_8
 const isCollapsed = ref(false)
@@ -130,5 +140,17 @@ function toggleCollapse() {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 0.2s, opacity 0.2s;
+}
+
+.legend-item--hidden .legend-label {
+  color: #3a4455;
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.legend-item--hidden .legend-color {
+  opacity: 0.4;
+  transition: background-color 0.2s, opacity 0.2s;
 }
 </style>
